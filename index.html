@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#08090a" />
+  <meta name="description" content="John's 411 — Private safety community for independent escorts" />
+  <title>John's 411</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; background: #08090a; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+```
+const T = {
+  bg:"#08090a", surface:"#0f1012", surface2:"#161719", surface3:"#1c1e21",
+  border:"#222428", borderL:"#2e3035",
+  rose:"#b5606a", roseL:"#d4858f", roseDim:"rgba(181,96,106,0.12)", roseGlow:"rgba(181,96,106,0.06)",
+  gold:"#b8975a", goldL:"#d4b47a", goldDim:"rgba(184,151,90,0.1)",
+  text:"#e2ddd8", muted:"#7a7670", dim:"#3e3c3a",
+  red:"#b05050", green:"#5a9070", amber:"#b08040",
+};
+
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Jost:wght@300;400;500&display=swap');
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#08090a; font-family:'Jost',sans-serif; }
+  input,textarea,select,button { font-family:'Jost',sans-serif; }
+  ::-webkit-scrollbar { width:3px; } ::-webkit-scrollbar-track { background:#08090a; } ::-webkit-scrollbar-thumb { background:#2a2d32; border-radius:2px; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes glow { 0%,100%{box-shadow:0 0 8px rgba(181,96,106,0.3)} 50%{box-shadow:0 0 18px rgba(181,96,106,0.6)} }
+  .fu { animation:fadeUp 0.45s cubic-bezier(.22,.68,0,1.15) both; }
+  .fi { animation:fadeIn 0.3s ease both; }
+  .hl:hover { background:rgba(255,255,255,0.022) !important; }
+  .sh:hover { transform:scale(1.18) !important; color:inherit; }
+  .btn-h:hover { opacity:0.88; transform:translateY(-1px); }
+`;
+
+const SEED_MEMBERS = [
+  { id:1, workName:"Sophia A.", phone:"770-555-0001", email:"sophia@proton.me", city:"Atlanta, GA", verified:true, joined:"2025-01-10", banList:["404-555-0182","713-555-8801"] },
+  { id:2, workName:"Valentina R.", phone:"786-555-0002", email:"val@proton.me", city:"Miami, FL", verified:true, joined:"2025-02-14", banList:[] },
+  { id:3, workName:"Camille N.", phone:"646-555-0003", email:"camille@proton.me", city:"New York, NY", verified:true, joined:"2025-03-01", banList:["212-555-3341"] },
+  { id:4, workName:"Reyna M.", phone:"713-555-0004", email:"reyna@proton.me", city:"Houston, TX", verified:true, joined:"2025-03-15", banList:["713-555-8801"] },
+];
+
+const SEED_REPORTS = [
+  { id:1, clientPhone:"404-555-0182", clientName:"Mike / 'BigMike'", city:"Atlanta, GA", date:"2025-04-28", paid:5, gentleman:1, bargained:1, recommend:false, banned:true, notes:"Refused to pay full rate after the appointment. Became aggressive when I held my boundary. Grabbed my wrist when I tried to leave. Do NOT see this person alone or anywhere private.", reportedBy:"Sophia A.", reporterId:1, corroborators:[3] },
+  { id:2, clientPhone:"305-555-9274", clientName:"R.T.", city:"Miami, FL", date:"2025-04-25", paid:4, gentleman:3, bargained:4, recommend:true, banned:false, notes:"Good client overall. Did try to negotiate the rate once but accepted no gracefully. Always pays on time and respects boundaries.", reportedBy:"Valentina R.", reporterId:2, corroborators:[] },
+  { id:3, clientPhone:"212-555-3341", clientName:"JP / 'traveler_nyc'", city:"New York, NY", date:"2025-04-20", paid:2, gentleman:2, bargained:2, recommend:false, banned:false, notes:"No-showed twice with zero communication. When he finally booked again I asked for a deposit — he ghosted. Not dangerous but a major time waster.", reportedBy:"Camille N.", reporterId:3, corroborators:[1] },
+  { id:4, clientPhone:"713-555-8801", clientName:"Unknown / Red F-150 TX plates", city:"Houston, TX", date:"2025-04-15", paid:1, gentleman:1, bargained:1, recommend:false, banned:true, notes:"Multiple reports of robbery and assault. Poses as a client and robs at the meeting point. Extremely dangerous. Do not meet under any circumstances. Contact SWOP if you have information.", reportedBy:"Reyna M.", reporterId:4, corroborators:[1,2,3] },
+  { id:5, clientPhone:"602-555-4490", clientName:"D. / 'Phoenix_Dave'", city:"Phoenix, AZ", date:"2025-04-10", paid:5, gentleman:5, bargained:5, recommend:true, banned:false, notes:"One of the best clients I've had. Respectful, pays on time, always confirms 30 min before. Highly recommend.", reportedBy:"Sophia A.", reporterId:1, corroborators:[2] },
+];
+
+const SEED_MESSAGES = [
+  { id:1, fromId:2, toId:1, text:"Hey Sophia! Saw your report on BigMike — he tried to book me last week with the same number. Thank you for the heads up!", time:"2025-04-29T14:23:00", read:false },
+  { id:2, fromId:1, toId:2, text:"Oh no! Glad you saw it in time. Definitely avoid him. Stay safe out there ❤️", time:"2025-04-29T14:31:00", read:true },
+  { id:3, fromId:3, toId:1, text:"Hi Sophia! New to the community. Do you get a lot of reports from Atlanta? Thinking of traveling there next month.", time:"2025-04-30T09:10:00", read:false },
+  { id:4, fromId:4, toId:1, text:"The Houston situation is getting bad. I've heard from two more girls about that F-150. Stay safe everyone.", time:"2025-04-30T18:44:00", read:false },
+];
+
+function Logo({ center, size="md" }) {
+  const fs = size==="lg"?26:20;
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:center?"center":"flex-start" }}>
+      <span style={{ width:size==="lg"?10:8, height:size==="lg"?10:8, background:T.rose, borderRadius:"50%", display:"inline-block", boxShadow:`0 0 10px ${T.rose}`, animation:"glow 2.5s ease infinite" }} />
+      <span style={{ fontFamily:"'Playfair Display',serif", fontSize:fs, fontWeight:400, letterSpacing:"0.05em", color:T.roseL }}>John's 411</span>
+    </div>
+  );
+}
+
+function Avatar({ name, size=32 }) {
+  const colors = ["#b5606a","#b8975a","#5a9070","#7a70b5","#b08040"];
+  const ci = name ? name.charCodeAt(0) % colors.length : 0;
+  return (
+    <div style={{ width:size, height:size, background:T.surface2, border:`1px solid ${T.border}`, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.4, color:colors[ci], fontFamily:"'Playfair Display',serif", flexShrink:0, fontWeight:500 }}>
+      {name?.[0] || "?"}
+    </div>
+  );
+}
+
+function Toast({ toast }) {
+  return (
+    <div className="fi" style={{ position:"fixed", bottom:28, left:"50%", transform:"translateX(-50%)", background:toast.type==="err"?T.red:T.green, color:"#fff", padding:"13px 28px", fontSize:13, letterSpacing:"0.05em", zIndex:9999, boxShadow:"0 6px 32px rgba(0,0,0,0.5)", whiteSpace:"nowrap", borderRadius:1 }}>
+      {toast.type==="err"?"✕":"✓"} {toast.msg}
+    </div>
+  );
+}
+
+function Pill({ text, color, bg, style:st }) {
+  return <span style={{ fontSize:10, letterSpacing:"0.12em", textTransform:"uppercase", padding:"4px 11px", border:`1px solid ${color}`, color, background:bg||"transparent", whiteSpace:"nowrap", ...st }}>{text}</span>;
+}
+
+function StarsDisplay({ value, color=T.gold, size=18 }) {
+  return (
+    <div style={{ display:"flex", gap:3 }}>
+      {[1,2,3,4,5].map(n => <span key={n} style={{ fontSize:size, color:n<=value?color:T.border }}>{n<=value?"★":"☆"}</span>)}
+    </div>
+  );
+}
+
+function StarsInput({ value, onChange, color=T.gold }) {
+  const [hov, setHov] = useState(0);
+  return (
+    <div style={{ display:"flex", gap:5 }}>
+      {[1,2,3,4,5].map(n => (
+        <span key={n} className="sh"
+          onMouseEnter={() => setHov(n)} onMouseLeave={() => setHov(0)}
+          onClick={() => onChange(n)}
+          style={{ fontSize:24, cursor:"pointer", color:n<=(hov||value)?color:T.border, transition:"color 0.1s,transform 0.1s", display:"inline-block", transform:"scale(1)", userSelect:"none" }}>★</span>
+      ))}
+    </div>
+  );
+}
+
+const riskOf = r => {
+  const avg = (r.paid + r.gentleman + r.bargained) / 3;
+  if (avg >= 4.2) return { label:"Good Client", color:T.green, bg:"rgba(90,144,112,0.08)", bar:T.green };
+  if (avg >= 2.8) return { label:"Use Caution", color:T.amber, bg:"rgba(176,128,64,0.08)", bar:T.amber };
+  return { label:"Avoid", color:T.red, bg:"rgba(176,80,80,0.1)", bar:T.red };
+};
+
+function FieldInput({ label, children }) {
+  return (
+    <div style={{ marginBottom:18 }}>
+      <div style={{ fontSize:11, letterSpacing:"0.13em", textTransform:"uppercase", color:T.muted, marginBottom:8 }}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function TextInp({ style:st, ...p }) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <input {...p}
+      onFocus={e => { setFocus(true); p.onFocus?.(e); }}
+      onBlur={e => { setFocus(false); p.onBlur?.(e); }}
+      style={{ width:"100%", background:T.surface2, border:`1px solid ${focus?T.rose:T.border}`, color:T.text, padding:"11px 14px", fontSize:14, fontWeight:300, outline:"none", transition:"border-color 0.2s", ...st }} />
+  );
+}
+
+function TextArea({ style:st, ...p }) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <textarea {...p}
+      onFocus={e => { setFocus(true); p.onFocus?.(e); }}
+      onBlur={e => { setFocus(false); p.onBlur?.(e); }}
+      style={{ width:"100%", background:T.surface2, border:`1px solid ${focus?T.rose:T.border}`, color:T.text, padding:"11px 14px", fontSize:14, fontWeight:300, outline:"none", resize:"vertical", transition:"border-color 0.2s", lineHeight:1.65, ...st }} />
+  );
+}
+
+function PrimaryBtn({ children, disabled, style:st, ...p }) {
+  return (
+    <button {...p} className="btn-h" disabled={disabled}
+      style={{ background:disabled?T.border:T.rose, border:"none", color:disabled?T.dim:"#fff", padding:"12px 28px", fontSize:12, letterSpacing:"0.1em", textTransform:"uppercase", cursor:disabled?"not-allowed":"pointer", fontWeight:500, transition:"all 0.2s", ...st }}>
+      {children}
+    </button>
+  );
+}
+
+function OutlineBtn({ children, style:st, ...p }) {
+  return (
+    <button {...p} className="btn-h"
+      style={{ background:"transparent", border:`1px solid ${T.border}`, color:T.muted, padding:"12px 24px", fontSize:12, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s", ...st }}>
+      {children}
+    </button>
+  );
+}
+
+function AppBar({ user, screen, unread, onNav, onReport }) {
+  const tabs = [["dashboard","Reports"],["messages","Messages"],["profile","Profile"]];
+  return (
+    <header style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"0 28px", height:62, borderBottom:`1px solid ${T.border}`, background:T.surface, position:"sticky", top:0, zIndex:100 }}>
+      <Logo />
+      <nav style={{ display:"flex", gap:2 }}>
+        {tabs.map(([s,l]) => (
+          <button key={s} onClick={() => onNav(s)}
+            style={{ background:"transparent", border:"none", color:screen===s?T.roseL:T.muted, padding:"8px 18px", fontSize:12, letterSpacing:"0.08em", textTransform:"uppercase", cursor:"pointer", borderBottom:screen===s?`2px solid ${T.rose}`:"2px solid transparent", transition:"all 0.2s", position:"relative", marginBottom:-1 }}>
+            {l}
+            {s==="messages" && unread>0 && (
+              <span style={{ position:"absolute", top:4, right:6, width:17, height:17, background:T.rose, borderRadius:"50%", fontSize:9, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700 }}>{unread}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+      <PrimaryBtn onClick={onReport} style={{ padding:"8px 20px", fontSize:11 }}>+ Report</PrimaryBtn>
+    </header>
+  );
+}
+
+function Card({ children, wide }) {
+  return (
+    <div style={{ minHeight:"100vh", background:T.bg, color:T.text, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+      <style>{CSS}</style>
+      <div className="fu" style={{ width:"100%", maxWidth:wide?540:420, background:T.surface, border:`1px solid ${T.border}`, padding:"44px 40px" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ReportCard({ r, user, isBanned, onToggleBan, onCorroborate, onMessage, members, delay }) {
+  const [open, setOpen] = useState(false);
+  const ri = riskOf(r);
+  const hasCorr = r.corroborators.includes(user?.id);
+  const isOwn = r.reporterId === user?.id;
+  const reporter = members.find(m => m.id === r.reporterId);
+
+  return (
+    <div className="fu" style={{ border:`1px solid ${T.border}`, borderLeft:`3px solid ${ri.bar}`, background:T.surface, marginBottom:10, animationDelay:`${delay}s` }}>
+      <div className="hl" onClick={() => setOpen(o => !o)} style={{ padding:"20px 22px", cursor:"pointer" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:10 }}>
+          <div>
+            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:17, color:T.text, marginBottom:4 }}>{r.clientName || "Unknown Client"}</div>
+            <div style={{ fontFamily:"monospace", fontSize:12, color:T.muted, letterSpacing:"0.06em" }}>{r.clientPhone}</div>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5, flexShrink:0 }}>
+            <Pill text={ri.label} color={ri.color} bg={ri.bg} />
+            {r.banned && <Pill text="Community Ban" color={T.red} bg="rgba(176,80,80,0.08)" />}
+            {isBanned && <Pill text="On Your Ban List" color={T.rose} bg={T.roseDim} />}
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:20, marginBottom:12, flexWrap:"wrap" }}>
+          {[["Payment",r.paid,T.gold],["Conduct",r.gentleman,T.gold],["No Bargaining",r.bargained,T.amber]].map(([lbl,val,col]) => (
+            <div key={lbl} style={{ display:"flex", alignItems:"center", gap:7 }}>
+              <span style={{ fontSize:10, color:T.dim, letterSpacing:"0.08em", textTransform:"uppercase" }}>{lbl}</span>
+              <StarsDisplay value={val} color={col} size={14} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
+          <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, color:T.dim }}>📍 {r.city}</span>
+            <span style={{ fontSize:11, color:T.dim }}>{r.date}</span>
+            <span style={{ fontSize:11, color:T.dim }}>by {r.reportedBy}</span>
+            <span style={{ fontSize:11, color:r.corroborators.length>0?T.amber:T.dim }}>🤝 {r.corroborators.length} corroboration{r.corroborators.length!==1?"s":""}</span>
+          </div>
+          <span style={{ fontSize:11, color:T.muted }}>{open?"▲ Less":"▼ Details"}</span>
+        </div>
+      </div>
+      {open && (
+        <div className="fi" style={{ padding:"0 22px 22px", borderTop:`1px solid ${T.border}` }}>
+          <p style={{ fontSize:13, color:T.muted, lineHeight:1.75, fontWeight:300, margin:"18px 0 18px" }}>{r.notes || "No additional notes provided."}</p>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+            <button onClick={onToggleBan}
+              style={{ background:"transparent", border:`1px solid ${isBanned?T.green:T.rose}`, color:isBanned?T.green:T.rose, padding:"7px 14px", fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s" }}>
+              {isBanned ? "✓ Banned — Remove" : "Add to Ban List"}
+            </button>
+            {!isOwn && (
+              <button onClick={onCorroborate} disabled={hasCorr}
+                style={{ background:hasCorr?T.goldDim:"transparent", border:`1px solid ${hasCorr?T.gold:T.borderL}`, color:hasCorr?T.goldL:T.muted, padding:"7px 14px", fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", cursor:hasCorr?"default":"pointer", transition:"all 0.2s" }}>
+                {hasCorr ? "✓ Corroborated" : "🤝 Corroborate This"}
+              </button>
+            )}
+            {!isOwn && reporter && (
+              <button onClick={() => onMessage(reporter.id)}
+                style={{ background:"transparent", border:`1px solid ${T.borderL}`, color:T.muted, padding:"7px 14px", fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s" }}>
+                💬 Message {r.reportedBy}
+              </button>
+            )}
+            {r.recommend && <Pill text="✓ Recommended" color={T.green} bg="rgba(90,144,112,0.08)" />}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChatPane({ user, other, messages, onSend }) {
+  const [text, setText] = useState("");
+  const endRef = useRef(null);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages]);
+  const send = () => { if (text.trim()) { onSend(text.trim()); setText(""); } };
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", minHeight:540 }}>
+      <div style={{ padding:"14px 20px", borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", gap:12 }}>
+        <Avatar name={other?.workName} size={36} />
+        <div>
+          <div style={{ fontSize:14, color:T.text }}>{other?.workName}</div>
+          <div style={{ fontSize:11, color:T.dim }}>{other?.city} · <span style={{ color:T.green }}>● verified member</span></div>
+        </div>
+      </div>
+      <div style={{ flex:1, overflowY:"auto", padding:"20px 20px 12px", display:"flex", flexDirection:"column", gap:10 }}>
+        {messages.length===0 && (
+          <div style={{ textAlign:"center", color:T.dim, fontSize:13, marginTop:48, lineHeight:2 }}>
+            <div style={{ fontSize:28, marginBottom:10 }}>💬</div>
+            No messages yet with {other?.workName}.<br/>Say hello!
+          </div>
+        )}
+        {messages.map(msg => {
+          const mine = msg.fromId===user.id;
+          return (
+            <div key={msg.id} className="fi" style={{ display:"flex", justifyContent:mine?"flex-end":"flex-start" }}>
+              <div style={{ maxWidth:"70%", background:mine?T.roseDim:T.surface2, border:`1px solid ${mine?"rgba(181,96,106,0.28)":T.border}`, padding:"10px 14px", fontSize:13, color:T.text, lineHeight:1.65, fontWeight:300 }}>
+                {msg.text}
+                <div style={{ fontSize:10, color:T.dim, marginTop:5, textAlign:"right" }}>
+                  {new Date(msg.time).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
+                  {mine && <span style={{ marginLeft:6, color:msg.read?T.green:T.dim }}>{msg.read?"✓✓":"✓"}</span>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={endRef} />
+      </div>
+      <div style={{ padding:"12px 16px", borderTop:`1px solid ${T.border}`, display:"flex", gap:8 }}>
+        <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key==="Enter" && send()}
+          placeholder={`Message ${other?.workName}…`}
+          style={{ flex:1, background:T.surface2, border:`1px solid ${T.border}`, color:T.text, padding:"10px 14px", fontSize:13, outline:"none", transition:"border-color 0.2s" }}
+          onFocus={e => e.target.style.borderColor=T.rose} onBlur={e => e.target.style.borderColor=T.border} />
+        <button onClick={send} style={{ background:T.rose, border:"none", color:"#fff", padding:"10px 20px", fontSize:14, cursor:"pointer" }}>→</button>
+      </div>
+    </div>
+  );
+}
+
+function RegisterFlow({ onComplete, onBack, fire }) {
+  const [step, setStep] = useState(1);
+  const [f, setF] = useState({ workName:"", phone:"", email:"", city:"", adLink:"", confirmed:false });
+  const [code, setCode] = useState("");
+  const mockCode = useRef("J411-" + Math.floor(1000 + Math.random() * 9000));
+  const set = (k,v) => setF(p => ({ ...p, [k]:v }));
+  return (
+    <Card wide>
+      <Logo center />
+      <div style={{ display:"flex", gap:3, margin:"28px 0 36px" }}>
+        {[1,2,3].map(n => <div key={n} style={{ flex:1, height:2, background:n<=step?T.rose:T.border, transition:"background 0.35s" }} />)}
+      </div>
+      {step===1 && <>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:24, color:T.roseL, marginBottom:6 }}>Apply for Access</div>
+        <div style={{ fontSize:13, color:T.muted, marginBottom:28, fontWeight:300, lineHeight:1.75 }}>John's 411 is exclusively for independent escorts. We verify your working contact details before granting access.</div>
+        <FieldInput label="Your working name / alias"><TextInp type="text" placeholder="Name you use professionally" value={f.workName} onChange={e=>set("workName",e.target.value)} /></FieldInput>
+        <FieldInput label="Phone number used in your ads *"><TextInp type="tel" placeholder="555-000-0000" value={f.phone} onChange={e=>set("phone",e.target.value)} /></FieldInput>
+        <FieldInput label="Email address used in your ads *"><TextInp type="email" placeholder="you@proton.me" value={f.email} onChange={e=>set("email",e.target.value)} /></FieldInput>
+        <FieldInput label="Your city / region"><TextInp type="text" placeholder="e.g. Atlanta, GA" value={f.city} onChange={e=>set("city",e.target.value)} /></FieldInput>
+        <PrimaryBtn style={{ width:"100%", padding:14 }} onClick={() => { if(f.phone&&f.email) setStep(2); else fire("Phone and email are required.","err"); }}>Continue →</PrimaryBtn>
+        <div style={{ marginTop:14, fontSize:12, color:T.dim, textAlign:"center", cursor:"pointer" }} onClick={onBack}>← Back to home</div>
+      </>}
+      {step===2 && <>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:24, color:T.roseL, marginBottom:6 }}>Confirm Independence</div>
+        <div style={{ fontSize:13, color:T.muted, marginBottom:20, fontWeight:300, lineHeight:1.75 }}>John's 411 is for independent escorts only — no agencies or managers. Please confirm and optionally share an ad link for our moderators to review.</div>
+        <div style={{ background:T.goldDim, border:`1px solid rgba(184,151,90,0.22)`, padding:18, marginBottom:22, fontSize:13, color:T.muted, lineHeight:1.75, fontWeight:300 }}>
+          <span style={{ color:T.goldL, fontWeight:400 }}>Why we verify: </span>
+          This community's value depends entirely on trust. Confirming independence keeps the platform accurate and safe for everyone here.
+        </div>
+        <label style={{ display:"flex", alignItems:"flex-start", gap:10, cursor:"pointer", marginBottom:22 }}>
+          <input type="checkbox" checked={f.confirmed} onChange={e=>set("confirmed",e.target.checked)} style={{ accentColor:T.rose, marginTop:3, flexShrink:0, width:15, height:15 }} />
+          <span style={{ fontSize:13, color:T.muted, lineHeight:1.65, fontWeight:300 }}>I confirm I am an independent escort, not affiliated with any agency or third-party manager. I understand misrepresentation results in permanent removal from the platform.</span>
+        </label>
+        <FieldInput label="Link to one of your ads (optional — helps verification)">
+          <TextInp type="url" placeholder="https://…" value={f.adLink} onChange={e=>set("adLink",e.target.value)} />
+        </FieldInput>
+        <div style={{ display:"flex", gap:10 }}>
+          <OutlineBtn onClick={() => setStep(1)}>← Back</OutlineBtn>
+          <PrimaryBtn disabled={!f.confirmed} style={{ flex:1, padding:14 }} onClick={() => { if(f.confirmed) setStep(3); else fire("Please confirm you are independent.","err"); }}>Continue →</PrimaryBtn>
+        </div>
+      </>}
+      {step===3 && <>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:24, color:T.roseL, marginBottom:6 }}>Verify Your Details</div>
+        <div style={{ fontSize:13, color:T.muted, marginBottom:22, fontWeight:300, lineHeight:1.75 }}>
+          In production, a verification code is sent to <strong style={{ color:T.text, fontWeight:400 }}>{f.phone}</strong> via SMS and to <strong style={{ color:T.text, fontWeight:400 }}>{f.email}</strong>. Enter the code below to confirm your identity.
+        </div>
+        <div style={{ background:T.roseDim, border:`1px solid rgba(181,96,106,0.25)`, padding:20, marginBottom:24 }}>
+          <div style={{ fontSize:11, color:T.rose, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>Demo — your verification code</div>
+          <div style={{ fontFamily:"monospace", fontSize:26, color:T.roseL, letterSpacing:"0.15em", fontWeight:500 }}>{mockCode.current}</div>
+        </div>
+        <FieldInput label="Enter your verification code">
+          <TextInp type="text" placeholder="J411-XXXX" value={code} onChange={e=>setCode(e.target.value)} />
+        </FieldInput>
+        <div style={{ display:"flex", gap:10 }}>
+          <OutlineBtn onClick={() => setStep(2)}>← Back</OutlineBtn>
+          <PrimaryBtn style={{ flex:1, padding:14 }} onClick={() => {
+            if(code===mockCode.current || code.length>=4) onComplete(f);
+            else fire("Incorrect code. Please try again.","err");
+          }}>Complete Registration →</PrimaryBtn>
+        </div>
+        <div style={{ marginTop:12, fontSize:11, color:T.dim, textAlign:"center" }}>Demo: any code of 4+ characters will work</div>
+      </>}
+    </Card>
+  );
+}
+
+function ReportForm({ user, onSubmit, onCancel }) {
+  const [f, setF] = useState({ clientName:"", clientPhone:"", city:"", notes:"", paid:0, gentleman:0, bargained:0, recommend:false, banned:false });
+  const set = (k,v) => setF(p => ({ ...p, [k]:v }));
+  const valid = f.clientPhone && f.paid && f.gentleman && f.bargained;
+  return (
+    <div style={{ minHeight:"100vh", background:T.bg, color:T.text }}>
+      <style>{CSS}</style>
+      <header style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"0 28px", height:62, borderBottom:`1px solid ${T.border}`, background:T.surface, position:"sticky", top:0, zIndex:100 }}>
+        <Logo />
+        <button onClick={onCancel} style={{ background:"transparent", border:"none", color:T.muted, cursor:"pointer", fontSize:13, letterSpacing:"0.06em" }}>✕ Cancel</button>
+      </header>
+      <div style={{ maxWidth:640, margin:"0 auto", padding:"48px 24px 80px" }}>
+        <div className="fu" style={{ background:T.surface, border:`1px solid ${T.border}`, padding:44 }}>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:26, color:T.roseL, marginBottom:6 }}>Submit a Client Report</div>
+          <div style={{ fontSize:13, color:T.muted, marginBottom:36, fontWeight:300 }}>Your report is shared anonymously with all verified John's 411 members.</div>
+          <FieldInput label="Client's phone number *">
+            <TextInp type="tel" placeholder="000-000-0000" value={f.clientPhone} onChange={e=>set("clientPhone",e.target.value)} />
+          </FieldInput>
+          <FieldInput label="Client alias / name (optional)">
+            <TextInp type="text" placeholder="Name, handle, username they used…" value={f.clientName} onChange={e=>set("clientName",e.target.value)} />
+          </FieldInput>
+          <FieldInput label="City / Region">
+            <TextInp type="text" placeholder="e.g. Atlanta, GA" value={f.city} onChange={e=>set("city",e.target.value)} />
+          </FieldInput>
+          <div style={{ borderTop:`1px solid ${T.border}`, paddingTop:28, marginBottom:24 }}>
+            <div style={{ fontSize:13, color:T.muted, marginBottom:24, fontWeight:300 }}>Rate this client — 1 star = very poor, 5 stars = excellent</div>
+            {[
+              ["Did he pay in full and on time?","paid",T.gold,null],
+              ["Was he a gentleman and respectful?","gentleman",T.gold,null],
+              ["Did he avoid bargaining or pushing your rates?","bargained",T.amber,"5 = no bargaining at all"],
+            ].map(([lbl,key,col,note]) => (
+              <div key={key} style={{ marginBottom:22 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                  <div style={{ fontSize:13, color:T.muted, fontWeight:300 }}>{lbl}</div>
+                  {note && <div style={{ fontSize:10, color:T.dim, letterSpacing:"0.06em" }}>{note}</div>}
+                </div>
+                <StarsInput value={f[key]} onChange={v=>set(key,v)} color={col} />
+              </div>
+            ))}
+          </div>
+          <FieldInput label="What happened (optional)">
+            <TextArea placeholder="Describe the encounter in your own words." value={f.notes} onChange={e=>set("notes",e.target.value)} style={{ minHeight:100 }} />
+          </FieldInput>
+          <div style={{ display:"flex", gap:24, marginBottom:28, flexWrap:"wrap", paddingTop:4 }}>
+            <label style={{ display:"flex", alignItems:"center", gap:9, cursor:"pointer", fontSize:13, color:T.muted, fontWeight:300 }}>
+              <input type="checkbox" checked={f.recommend} onChange={e=>set("recommend",e.target.checked)} style={{ accentColor:T.green, width:15, height:15 }} />
+              Would recommend to other girls
+            </label>
+            <label style={{ display:"flex", alignItems:"center", gap:9, cursor:"pointer", fontSize:13, color:T.rose, fontWeight:300 }}>
+              <input type="checkbox" checked={f.banned} onChange={e=>set("banned",e.target.checked)} style={{ accentColor:T.rose, width:15, height:15 }} />
+              Ban this number community-wide
+            </label>
+          </div>
+          <div style={{ display:"flex", gap:12 }}>
+            <OutlineBtn onClick={onCancel}>Cancel</OutlineBtn>
+            <PrimaryBtn disabled={!valid} style={{ flex:1, padding:14 }} onClick={() => valid && onSubmit(f)}>Submit Report</PrimaryBtn>
+          </div>
+          {!valid && <div style={{ fontSize:11, color:T.dim, marginTop:10, textAlign:"center" }}>Phone number and all three star ratings are required.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [screen, setScreen] = useState("landing");
+  const [user, setUser] = useState(null);
+  const [members, setMembers] = useState(SEED_MEMBERS);
+  const [reports, setReports] = useState(SEED_REPORTS);
+  const [messages, setMessages] = useState(SEED_MESSAGES);
+  const [toast, setToast] = useState(null);
+  const [filterType, setFilterType] = useState("all");
+  const [cityFilter, setCityFilter] = useState("");
+  const [searchQ, setSearchQ] = useState("");
+  const [msgThread, setMsgThread] = useState(null);
+
+  const fire = (msg, type="ok") => { setToast({msg,type}); setTimeout(() => setToast(null), 3200); };
+  const login = m => { setUser(m); setScreen("dashboard"); };
+  const logout = () => { setUser(null); setScreen("landing"); };
+  const unread = user ? messages.filter(m => m.toId===user.id && !m.read).length : 0;
+
+  const toggleBan = phone => {
+    setUser(prev => {
+      const next = prev.banList.includes(phone) ? prev.banList.filter(p => p!==phone) : [...prev.banList, phone];
+      const updated = { ...prev, banList:next };
+      setMembers(ms => ms.map(m => m.id===prev.id ? updated : m));
+      fire(next.includes(phone) ? "Number added to your ban list." : "Number removed from your ban list.");
+      return updated;
+    });
+  };
+
+  const corroborate = id => {
+    setReports(prev => prev.map(r => {
+      if (r.id!==id) return r;
+      if (r.reporterId===user.id) { fire("You can't corroborate your own report.","err"); return r; }
+      if (r.corroborators.includes(user.id)) { fire("You've already corroborated this report.","err"); return r; }
+      fire("Corroboration added — thank you for confirming.");
+      return { ...r, corroborators:[...r.corroborators, user.id] };
+    }));
+  };
+
+  const submitReport = rep => {
+    const newRep = { ...rep, id:Date.now(), date:new Date().toISOString().split("T")[0], reportedBy:user.workName, reporterId:user.id, corroborators:[] };
+    setReports(prev => [newRep, ...prev]);
+    if (rep.banned) {
+      setMembers(ms => ms.map(m => ({ ...m, banList:m.banList.includes(rep.clientPhone)?m.banList:[...m.banList,rep.clientPhone] })));
+      setUser(prev => ({ ...prev, banList:prev.banList.includes(rep.clientPhone)?prev.banList:[...prev.banList,rep.clientPhone] }));
+    }
+    fire("Report submitted and shared with all members.");
+    setScreen("dashboard");
+  };
+
+  const sendMessage = (toId, text) => {
+    setMessages(prev => [...prev, { id:Date.now(), fromId:user.id, toId, text, time:new Date().toISOString(), read:false }]);
+  };
+
+  const markRead = fromId => {
+    setMessages(prev => prev.map(m => m.toId===user?.id && m.fromId===fromId ? {...m,read:true} : m));
+  };
+
+  const register = data => {
+    const m = { id:Date.now(), ...data, verified:true, joined:new Date().toISOString().split("T")[0], banList:[] };
+    setMembers(prev => [...prev, m]);
+    setUser(m);
+    setScreen("dashboard");
+    fire("Welcome to John's 411. You're verified ✓");
+  };
+
+  const goMsg = id => { setMsgThread(id); markRead(id); setScreen("messages"); };
+  const cities = ["All Cities", ...[...new Set(reports.map(r => r.city))].sort()];
+  const filtered = reports.filter(r => {
+    const matchQ = !searchQ || r.clientPhone.includes(searchQ) || r.clientName.toLowerCase().includes(searchQ.toLowerCase()) || r.city.toLowerCase().includes(searchQ.toLowerCase());
+    const matchC = !cityFilter || cityFilter==="All Cities" || r.city===cityFilter;
+    if (!matchQ || !matchC) return false;
+    const ri = riskOf(r);
+    if (filterType==="avoid") return ri.label==="Avoid";
+    if (filterType==="caution") return ri.label==="Use Caution";
+    if (filterType==="good") return ri.label==="Good Client";
+    if (filterType==="banned") return r.banned;
+    return true;
+  });
+
+  if (screen==="landing") return (
+    <div style={{ minHeight:"100vh", background:T.bg, color:T.text }}>
+      <style>{CSS}</style>
+      <div style={{ position:"fixed", inset:0, background:"radial-gradient(ellipse 55% 35% at 75% 15%,rgba(181,96,106,0.07) 0%,transparent 70%),radial-gradient(ellipse 35% 55% at 15% 85%,rgba(184,151,90,0.04) 0%,transparent 70%)", pointerEvents:"none" }} />
+      <nav style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"0 48px", height:66, borderBottom:`1px solid ${T.border}`, background:T.surface, position:"sticky", top:0, zIndex:50 }}>
+        <Logo size="md" />
+        <div style={{ display:"flex", gap:12 }}>
+          <OutlineBtn onClick={() => setScreen("register")}>Join</OutlineBtn>
+          <PrimaryBtn onClick={() => setScreen("login")}>Sign In</PrimaryBtn>
+        </div>
+      </nav>
+      <div style={{ maxWidth:980, margin:"0 auto", padding:"100px 48px 80px", position:"relative", zIndex:1 }}>
+        <div className="fu" style={{ fontSize:11, letterSpacing:"0.22em", textTransform:"uppercase", color:T.rose, marginBottom:24, display:"flex", alignItems:"center", gap:14 }}>
+          <span style={{ width:36, height:1, background:T.rose, display:"inline-block" }} />
+          Private · Verified · Independent Escorts Only
+        </div>
+        <h1 className="fu" style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(46px,7vw,82px)", fontWeight:400, lineHeight:1.0, letterSpacing:"-0.02em", marginBottom:34, animationDelay:"0.07s" }}>
+          John's 411
+          <br />
+          <em style={{ fontStyle:"italic", color:T.roseL }}>The inside word,<br />from us — for us.</em>
+        </h1>
+        <p className="fu" style={{ color:T.muted, fontSize:17, lineHeight:1.85, maxWidth:500, marginBottom:52, fontWeight:300, animationDelay:"0.14s" }}>
+          A closed, verified community exclusively for independent escorts. Report bad clients, rate encounters, search by city, corroborate reports, and message each other privately. No agencies. No outsiders. Ever.
+        </p>
+        <div className="fu" style={{ display:"flex", gap:14, flexWrap:"wrap", animationDelay:"0.21s" }}>
+          <PrimaryBtn style={{ padding:"15px 40px", fontSize:13 }} onClick={() => setScreen("register")}>Apply for Access</PrimaryBtn>
+          <OutlineBtn style={{ padding:"15px 40px", fontSize:13 }} onClick={() => setScreen("login")}>Member Login</OutlineBtn>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:0, marginTop:96, borderTop:`1px solid ${T.border}` }}>
+          {[
+            ["🔐","Verified Members Only","Your working phone and ad email confirmed before access. No outsiders, ever."],
+            ["⭐","5-Star Client Reviews","Rate payment, conduct, bargaining. Build a shared knowledge base everyone trusts."],
+            ["🔍","Search by City","Find reports from your area or any city you plan to travel to."],
+            ["🤝","Corroborate Reports","Confirm it happened to you too — adds credibility and alerts the community."],
+            ["💬","Private Messaging","Message verified members securely and discreetly, directly in the platform."],
+            ["🚫","Community Ban List","Flag a number — added to your personal block list and flagged site-wide."],
+          ].map(([icon,title,desc],i) => (
+            <div key={i} className="fu" style={{ padding:"34px 28px", borderRight:(i+1)%3!==0?`1px solid ${T.border}`:"none", borderTop:`1px solid ${T.border}`, animationDelay:`${0.28+i*0.06}s` }}>
+              <div style={{ fontSize:26, marginBottom:14 }}>{icon}</div>
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:16, marginBottom:9, color:T.goldL }}>{title}</div>
+              <div style={{ fontSize:13, color:T.muted, lineHeight:1.8, fontWeight:300 }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <footer style={{ borderTop:`1px solid ${T.border}`, padding:"26px 48px", display:"flex", justifyContent:"space-between", alignItems:"center", background:T.surface, flexWrap:"wrap", gap:12 }}>
+        <div style={{ fontSize:12, color:T.dim }}>© 2025 John's 411 — Private community. All rights reserved.</div>
+        <div style={{ display:"flex", gap:24 }}>
+          {["Privacy Policy","Community Guidelines","Contact"].map(l => <span key={l} style={{ fontSize:12, color:T.dim, cursor:"pointer" }}>{l}</span>)}
+        </div>
+      </footer>
+      {toast && <Toast toast={toast} />}
+    </div>
+  );
+
+  if (screen==="login") return (
+    <Card>
+      <Logo center />
+      <div style={{ fontFamily:"'Playfair Display',serif", fontSize:24, color:T.roseL, marginBottom:6, marginTop:26 }}>Member Sign In</div>
+      <div style={{ fontSize:13, color:T.muted, marginBottom:30, fontWeight:300 }}>Verified independent escorts only.</div>
+      <FieldInput label="Working email (used in your ads)"><TextInp type="email" placeholder="you@proton.me" id="l-em" /></FieldInput>
+      <FieldInput label="Working phone (used in your ads)"><TextInp type="tel" placeholder="555-000-0000" id="l-ph" /></FieldInput>
+      <PrimaryBtn style={{ width:"100%", padding:14 }} onClick={() => {
+        const em = document.getElementById("l-em")?.value;
+        const ph = document.getElementById("l-ph")?.value;
+        const found = members.find(m => m.email===em || m.phone===ph);
+        if (found) login(found); else fire("No verified member found. Please register.","err");
+      }}>Sign In</PrimaryBtn>
+      <div style={{ marginTop:16, fontSize:12, color:T.dim, textAlign:"center" }}>
+        <span style={{ cursor:"pointer", color:T.muted }} onClick={() => setScreen("register")}>Not a member? Apply here →</span>
+        {"  "}·{"  "}
+        <span style={{ cursor:"pointer", color:T.muted }} onClick={() => setScreen("landing")}>← Back</span>
+      </div>
+      <div style={{ marginTop:28, paddingTop:20, borderTop:`1px solid ${T.border}` }}>
+        <div style={{ fontSize:11, color:T.dim, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>Demo — quick login</div>
+        {SEED_MEMBERS.map(m => (
+          <button key={m.id} onClick={() => login(m)} className="hl"
+            style={{ width:"100%", background:T.surface2, border:`1px solid ${T.border}`, color:T.muted, padding:"9px 14px", fontSize:12, cursor:"pointer", textAlign:"left", marginBottom:6, transition:"background 0.15s" }}>
+            → {m.workName} · {m.city}
+          </button>
+        ))}
+      </div>
+      {toast && <Toast toast={toast} />}
+    </Card>
+  );
+
+  if (screen==="register") return <RegisterFlow onComplete={register} onBack={() => setScreen("landing")} fire={fire} />;
+  if (screen==="report") return <ReportForm user={user} onSubmit={submitReport} onCancel={() => setScreen("dashboard")} />;
+
+  if (screen==="dashboard") return (
+    <div style={{ minHeight:"100vh", background:T.bg, color:T.text }}>
+      <style>{CSS}</style>
+      <AppBar user={user} screen={screen} unread={unread} onNav={s => { setScreen(s); if(s==="messages") setMsgThread(null); }} onReport={() => setScreen("report")} />
+      <div style={{ maxWidth:1180, margin:"0 auto", padding:"0 24px 80px" }}>
+        <div style={{ padding:"34px 0 26px", borderBottom:`1px solid ${T.border}`, marginBottom:28, display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:16 }}>
+          <div>
+            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:26 }}>Welcome back, <em style={{ fontStyle:"italic", color:T.roseL }}>{user?.workName}</em></div>
+            <div style={{ fontSize:13, color:T.muted, marginTop:6, fontWeight:300 }}>
+              {reports.length} community reports · {user?.banList?.length||0} on your ban list
+              {unread>0 && <span style={{ color:T.rose, marginLeft:10 }}>· {unread} unread message{unread>1?"s":""}</span>}
+            </div>
+          </div>
+          <PrimaryBtn onClick={() => setScreen("report")} style={{ padding:"12px 28px" }}>+ Submit Report</PrimaryBtn>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 294px", gap:28 }}>
+          <div>
+            <div style={{ display:"flex", gap:8, marginBottom:10, flexWrap:"wrap" }}>
+              <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search phone, name, city…"
+                style={{ flex:1, minWidth:160, background:T.surface2, border:`1px solid ${T.border}`, color:T.text, padding:"9px 14px", fontSize:13, outline:"none" }}
+                onFocus={e => e.target.style.borderColor=T.rose} onBlur={e => e.target.style.borderColor=T.border} />
+              <select value={cityFilter||"All Cities"} onChange={e => setCityFilter(e.target.value==="All Cities"?"":e.target.value)}
+                style={{ background:T.surface2, border:`1px solid ${T.border}`, color:cityFilter?T.text:T.muted, padding:"9px 14px", fontSize:13, outline:"none", cursor:"pointer", minWidth:155 }}>
+                {cities.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={{ display:"flex", gap:6, marginBottom:18, flexWrap:"wrap" }}>
+              {[["all","All"],["avoid","Avoid"],["caution","Caution"],["good","Good"],["banned","Banned"]].map(([v,l]) => (
+                <button key={v} onClick={() => setFilterType(v)}
+                  style={{ padding:"7px 14px", fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", border:`1px solid ${filterType===v?T.rose:T.border}`, background:filterType===v?T.roseDim:"transparent", color:filterType===v?T.roseL:T.muted, transition:"all 0.2s" }}>{l}</button>
+              ))}
+              {(cityFilter||searchQ) && (
+                <button onClick={() => { setCityFilter(""); setSearchQ(""); }}
+                  style={{ padding:"7px 14px", fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", border:`1px solid ${T.gold}`, background:T.goldDim, color:T.goldL }}>✕ Clear</button>
+              )}
+            </div>
+            {filtered.length===0 && <div style={{ color:T.dim, fontSize:14, padding:"32px 0" }}>No reports match your filters.</div>}
+            {filtered.map((r,i) => (
+              <ReportCard key={r.id} r={r} user={user} isBanned={user?.banList?.includes(r.clientPhone)}
+                onToggleBan={() => toggleBan(r.clientPhone)}
+                onCorroborate={() => corroborate(r.id)}
+                onMessage={id => goMsg(id)}
+                members={members} delay={i*0.045} />
+            ))}
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            <div style={{ background:T.surface, border:`1px solid ${T.border}`, padding:22 }}>
+              <div style={{ fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:T.rose, marginBottom:16 }}>Your Ban List</div>
+              {user?.banList?.length===0 && <div style={{ fontSize:13, color:T.dim }}>No numbers banned yet.</div>}
+              {user?.banList?.map(ph => (
+                <div key={ph} className="hl" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:`1px solid ${T.border}` }}>
+                  <span style={{ fontSize:12, color:T.muted, fontFamily:"monospace", letterSpacing:"0.04em" }}>{ph}</span>
+                  <span onClick={() => toggleBan(ph)} style={{ fontSize:10, color:T.red, cursor:"pointer", letterSpacing:"0.1em", textTransform:"uppercase" }}>Remove</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ background:T.surface, border:`1px solid ${T.border}`, padding:22 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                <div style={{ fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:T.rose }}>Members</div>
+                <span style={{ fontSize:10, background:T.rose, color:"#fff", borderRadius:10, padding:"2px 8px", fontWeight:600 }}>{members.length}</span>
+              </div>
+              {members.map(m => {
+                const mUnread = messages.filter(msg => msg.fromId===m.id && msg.toId===user.id && !msg.read).length;
+                return (
+                  <div key={m.id} className="hl" onClick={() => m.id!==user.id && goMsg(m.id)}
+                    style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 0", borderBottom:`1px solid ${T.border}`, cursor:m.id!==user.id?"pointer":"default" }}>
+                    <Avatar name={m.workName} size={28} />
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, color:T.text }}>{m.workName}{m.id===user.id&&<span style={{ fontSize:10, color:T.dim, marginLeft:6 }}>(you)</span>}</div>
+                      <div style={{ fontSize:11, color:T.dim }}>{m.city}</div>
+                    </div>
+                    {mUnread>0 && <span style={{ width:18, height:18, background:T.rose, borderRadius:"50%", fontSize:9, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700 }}>{mUnread}</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ background:T.goldDim, border:`1px solid rgba(184,151,90,0.22)`, padding:18 }}>
+              <div style={{ fontSize:12, color:T.goldL, marginBottom:6, fontWeight:500 }}>🔒 Privacy first</div>
+              <div style={{ fontSize:12, color:T.muted, lineHeight:1.75, fontWeight:300 }}>Only verified independent members can see this data. Never share your login credentials. All reports are submitted anonymously.</div>
+            </div>
+            <div style={{ background:T.surface, border:`1px solid ${T.border}`, padding:22 }}>
+              <div style={{ fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:T.rose, marginBottom:14 }}>Safety Resources</div>
+              {[["🛡 SWOP","Sex Workers Outreach Project"],["📞 COYOTE","Legal aid & peer support"],["⚖️ Know Your Rights","Legal info for sex workers"],["🏥 Health Resources","Clinics & harm reduction"]].map(([icon,label]) => (
+                <div key={label} className="hl" style={{ padding:"9px 0", borderBottom:`1px solid ${T.border}`, cursor:"pointer" }}>
+                  <div style={{ fontSize:13, color:T.muted, fontWeight:300 }}>{icon}</div>
+                  <div style={{ fontSize:11, color:T.dim, marginTop:2 }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {toast && <Toast toast={toast} />}
+    </div>
+  );
+
+  if (screen==="messages") return (
+    <div style={{ minHeight:"100vh", background:T.bg, color:T.text }}>
+      <style>{CSS}</style>
+      <AppBar user={user} screen={screen} unread={unread} onNav={s => { setScreen(s); if(s==="messages") setMsgThread(null); }} onReport={() => setScreen("report")} />
+      <div style={{ maxWidth:1020, margin:"0 auto", padding:"0 24px 80px" }}>
+        <div style={{ padding:"34px 0 24px", borderBottom:`1px solid ${T.border}`, marginBottom:24 }}>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:26 }}>Private <em style={{ fontStyle:"italic", color:T.roseL }}>Messages</em></div>
+          <div style={{ fontSize:13, color:T.muted, marginTop:6, fontWeight:300 }}>End-to-end encrypted in production. Visible only to you and the recipient.</div>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"268px 1fr", gap:0, border:`1px solid ${T.border}`, minHeight:560 }}>
+          <div style={{ borderRight:`1px solid ${T.border}` }}>
+            <div style={{ padding:"12px 16px", borderBottom:`1px solid ${T.border}`, fontSize:11, color:T.dim, letterSpacing:"0.1em", textTransform:"uppercase" }}>Conversations</div>
+            {members.filter(m => m.id!==user.id).map(m => {
+              const thread = messages.filter(msg => (msg.fromId===user.id&&msg.toId===m.id)||(msg.fromId===m.id&&msg.toId===user.id));
+              const last = thread[thread.length-1];
+              const mUnread = messages.filter(msg => msg.fromId===m.id && msg.toId===user.id && !msg.read).length;
+              const active = msgThread===m.id;
+              return (
+                <div key={m.id} className="hl" onClick={() => { setMsgThread(m.id); markRead(m.id); }}
+                  style={{ padding:"14px 16px", borderBottom:`1px solid ${T.border}`, cursor:"pointer", background:active?T.roseDim:"transparent", borderLeft:active?`3px solid ${T.rose}`:"3px solid transparent", transition:"all 0.15s" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:4 }}>
+                    <Avatar name={m.workName} size={28} />
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, color:active?T.roseL:T.text, fontWeight:mUnread>0?500:300 }}>{m.workName}</div>
+                      <div style={{ fontSize:10, color:T.dim }}>{m.city}</div>
+                    </div>
+                    {mUnread>0 && <span style={{ width:18, height:18, background:T.rose, borderRadius:"50%", fontSize:9, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700 }}>{mUnread}</span>}
+                  </div>
+                  <div style={{ fontSize:12, color:T.dim, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:200, paddingLeft:37 }}>
+                    {last ? (last.fromId===user.id?"You: ":"")+last.text : <em>No messages yet</em>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {!msgThread ? (
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:12, color:T.dim, fontSize:14, padding:48 }}>
+              <div style={{ fontSize:36 }}>💬</div>
+              <div>Select a member to start messaging</div>
+            </div>
+          ) : (
+            <ChatPane user={user} other={members.find(m => m.id===msgThread)}
+              messages={messages.filter(msg => (msg.fromId===user.id&&msg.toId===msgThread)||(msg.fromId===msgThread&&msg.toId===user.id))}
+              onSend={text => sendMessage(msgThread, text)} />
+          )}
+        </div>
+      </div>
+      {toast && <Toast toast={toast} />}
+    </div>
+  );
+
+  if (screen==="profile") return (
+    <div style={{ minHeight:"100vh", background:T.bg, color:T.text }}>
+      <style>{CSS}</style>
+      <AppBar user={user} screen={screen} unread={unread} onNav={s => setScreen(s)} onReport={() => setScreen("report")} />
+      <div style={{ maxWidth:560, margin:"60px auto", padding:"0 24px" }}>
+        <div className="fu" style={{ background:T.surface, border:`1px solid ${T.border}`, padding:44 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:30 }}>
+            <Avatar name={user?.workName} size={54} />
+            <div>
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:26, color:T.roseL }}>{user?.workName}</div>
+              <div style={{ fontSize:12, color:T.muted, marginTop:5 }}>Member since {user?.joined}</div>
+            </div>
+          </div>
+          {[["Working Phone",user?.phone],["Working Email",user?.email],["City",user?.city]].map(([l,v]) => (
+            <div key={l} style={{ padding:"14px 0", borderBottom:`1px solid ${T.border}` }}>
+              <div style={{ fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:T.dim, marginBottom:5 }}>{l}</div>
+              <div style={{ fontSize:14, color:T.text, fontWeight:300 }}>{v}</div>
+            </div>
+          ))}
+          <div style={{ padding:"16px 0", borderBottom:`1px solid ${T.border}` }}>
+            <div style={{ fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", color:T.dim, marginBottom:8 }}>Stats</div>
+            <div style={{ display:"flex", gap:24 }}>
+              <div><div style={{ fontSize:20, fontFamily:"'Playfair Display',serif", color:T.goldL }}>{reports.filter(r=>r.reporterId===user.id).length}</div><div style={{ fontSize:11, color:T.dim }}>Reports submitted</div></div>
+              <div><div style={{ fontSize:20, fontFamily:"'Playfair Display',serif", color:T.goldL }}>{user?.banList?.length||0}</div><div style={{ fontSize:11, color:T.dim }}>Numbers banned</div></div>
+              <div><div style={{ fontSize:20, fontFamily:"'Playfair Display',serif", color:T.goldL }}>{reports.filter(r=>r.corroborators.includes(user.id)).length}</div><div style={{ fontSize:11, color:T.dim }}>Corroborated</div></div>
+            </div>
+          </div>
+          <div style={{ marginTop:22, marginBottom:28 }}>
+            <Pill text="✓ Verified Independent Escort" color={T.green} bg="rgba(90,144,112,0.08)" />
+          </div>
+          <div style={{ display:"flex", gap:12 }}>
+            <OutlineBtn onClick={() => setScreen("dashboard")}>← Dashboard</OutlineBtn>
+            <button onClick={logout} className="btn-h" style={{ background:"transparent", border:`1px solid ${T.red}`, color:T.red, padding:"12px 24px", fontSize:12, letterSpacing:"0.1em", textTransform:"uppercase", cursor:"pointer", transition:"all 0.2s" }}>Sign Out</button>
+          </div>
+        </div>
+      </div>
+      {toast && <Toast toast={toast} />}
+    </div>
+  );
+
+  return null;
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+```
+
+  </script>
+</body>
+</html>
