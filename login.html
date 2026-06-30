@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Member Login — John's 411</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1416;
+    color: #f4ece6;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: #241c1f;
+    border: 1px solid #3a2c30;
+    border-radius: 14px;
+    padding: 32px 28px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 6px;
+    color: #e8b4bc;
+  }
+  p.sub {
+    color: #b8a8ad;
+    font-size: 0.9rem;
+    margin: 0 0 24px;
+    line-height: 1.4;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: #d8c8cc;
+    margin: 16px 0 6px;
+  }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #4a383d;
+    background: #1a1416;
+    color: #f4ece6;
+    font-size: 1rem;
+  }
+  input:focus {
+    outline: none;
+    border-color: #c98a96;
+  }
+  button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    background: #c98a96;
+    color: #1a1416;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; }
+  .status {
+    margin-top: 16px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  .status.error { color: #e08a8a; }
+  .status.success { color: #a8d8b0; }
+  .apply-link {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    color: #b8a8ad;
+    font-size: 0.85rem;
+  }
+  .apply-link a { color: #c98a96; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Member Login</h1>
+  <p class="sub">Sign in to search and submit safety reports.</p>
+
+  <form id="login-form">
+    <label for="email">Email</label>
+    <input type="email" id="email" required autocomplete="email" />
+
+    <label for="password">Password</label>
+    <input type="password" id="password" required autocomplete="current-password" />
+
+    <button type="submit" id="submit-btn">Log In</button>
+  </form>
+
+  <div id="status" class="status"></div>
+
+  <div class="apply-link">
+    Not a member yet? <a href="signup.html">Apply for access</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://vjytxxojhdfafuhpjocj.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_mlxt4kHBEfWUtnSpii71jw_h6EiSW6q";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const form = document.getElementById('login-form');
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('submit-btn');
+
+  // If already logged in, skip straight to dashboard
+  (async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      window.location.href = 'dashboard.html';
+    }
+  })();
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    statusEl.textContent = '';
+    statusEl.className = 'status';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      const userId = data.user.id;
+
+      // Check profile status before letting them into the dashboard
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile.status === 'pending') {
+        statusEl.textContent = "Your application is still under review. We'll notify you once approved.";
+        statusEl.className = 'status error';
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (profile.status === 'rejected') {
+        statusEl.textContent = "We're unable to verify your account at this time.";
+        statusEl.className = 'status error';
+        await supabase.auth.signOut();
+        return;
+      }
+
+      statusEl.textContent = 'Welcome back. Redirecting...';
+      statusEl.className = 'status success';
+      window.location.href = 'dashboard.html';
+
+    } catch (err) {
+      statusEl.textContent = err.message || 'Login failed. Check your email and password.';
+      statusEl.className = 'status error';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
