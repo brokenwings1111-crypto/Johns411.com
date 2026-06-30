@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Safety Reports — John's 411</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1416;
+    color: #f4ece6;
+    padding: 20px;
+  }
+  h1 { color: #e8b4bc; font-size: 1.4rem; margin-bottom: 4px; }
+  .sub { color: #b8a8ad; font-size: 0.85rem; margin-bottom: 20px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    background: #241c1f;
+    border: 1px solid #3a2c30;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .tab.active { background: #c98a96; color: #1a1416; font-weight: 600; border-color: #c98a96; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  input, textarea, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #4a383d;
+    background: #241c1f;
+    color: #f4ece6;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  label { display: block; font-size: 0.85rem; color: #d8c8cc; margin-bottom: 6px; }
+  button.primary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    background: #c98a96;
+    color: #1a1416;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .result-card {
+    background: #241c1f;
+    border: 1px solid #3a2c30;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .result-card .rname { font-weight: 700; font-size: 1.05rem; color: #e8b4bc; }
+  .result-card .rphone { color: #b8a8ad; font-size: 0.9rem; margin: 2px 0 8px; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+  }
+  .badge.general { background: #3a3236; color: #b8a8ad; }
+  .badge.caution { background: #4a3a1a; color: #e0b860; }
+  .badge.severe { background: #4a1a1a; color: #e08a8a; }
+  .result-card .rdesc { font-size: 0.92rem; line-height: 1.4; }
+  .result-card .rmeta { color: #8a787c; font-size: 0.75rem; margin-top: 8px; }
+  .empty { color: #8a787c; text-align: center; margin-top: 30px; }
+  .status { margin-top: 10px; font-size: 0.85rem; }
+  .status.error { color: #e08a8a; }
+  .status.success { color: #a8d8b0; }
+</style>
+</head>
+<body>
+
+<h1>Safety Reports</h1>
+<p class="sub">Verified members only. Search before you book. Report anything concerning.</p>
+
+<div class="tabs">
+  <div class="tab active" data-tab="search">Search</div>
+  <div class="tab" data-tab="submit">Report a Client</div>
+</div>
+
+<div class="panel active" id="panel-search">
+  <label for="search-input">Search by name or phone</label>
+  <input type="text" id="search-input" placeholder="e.g. John or 555-1234" />
+  <div id="results"></div>
+</div>
+
+<div class="panel" id="panel-submit">
+  <form id="report-form">
+    <label for="client-name">Client name / alias</label>
+    <input type="text" id="client-name" required />
+
+    <label for="client-phone">Phone number (if known)</label>
+    <input type="tel" id="client-phone" />
+
+    <label for="severity">How serious was this?</label>
+    <select id="severity">
+      <option value="general">General — rude, unreliable, wasted time</option>
+      <option value="caution">Caution — pushed boundaries, made you uneasy</option>
+      <option value="severe">Severe — threats, violence, refused to pay</option>
+    </select>
+
+    <label for="description">What happened</label>
+    <textarea id="description" required></textarea>
+
+    <button type="submit" class="primary">Submit Report</button>
+  </form>
+  <div id="submit-status" class="status"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://vjytxxojhdfafuhpjocj.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_mlxt4kHBEfWUtnSpii71jw_h6EiSW6q";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // --- tabs ---
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // --- search ---
+  const searchInput = document.getElementById('search-input');
+  const resultsEl = document.getElementById('results');
+  let searchTimeout;
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(runSearch, 350);
+  });
+
+  async function runSearch() {
+    const q = searchInput.value.trim();
+    if (!q) { resultsEl.innerHTML = ''; return; }
+
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .or(`client_name.ilike.%${q}%,client_phone.ilike.%${q}%`)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      resultsEl.innerHTML = `<div class="empty">Error: ${error.message}</div>`;
+      return;
+    }
+    if (!data.length) {
+      resultsEl.innerHTML = `<div class="empty">No reports found for "${q}".</div>`;
+      return;
+    }
+
+    const severityLabel = { general: 'General', caution: 'Caution', severe: 'Severe' };
+
+    resultsEl.innerHTML = data.map(r => `
+      <div class="result-card">
+        <div class="badge ${r.severity}">${severityLabel[r.severity] || 'General'}</div>
+        <div class="rname">${r.client_name}</div>
+        ${r.client_phone ? `<div class="rphone">${r.client_phone}</div>` : ''}
+        <div class="rdesc">${r.description}</div>
+        <div class="rmeta">Reported ${new Date(r.created_at).toLocaleDateString()}</div>
+      </div>
+    `).join('');
+  }
+
+  // --- submit report ---
+  const form = document.getElementById('report-form');
+  const submitStatus = document.getElementById('submit-status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitStatus.textContent = '';
+    submitStatus.className = 'status';
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      submitStatus.textContent = 'You must be logged in to submit a report.';
+      submitStatus.className = 'status error';
+      return;
+    }
+
+    const clientName = document.getElementById('client-name').value.trim();
+    const clientPhone = document.getElementById('client-phone').value.trim();
+    const severity = document.getElementById('severity').value;
+    const description = document.getElementById('description').value.trim();
+
+    try {
+      const { error: insertError } = await supabase.from('reports').insert({
+        reporter_id: user.id,
+        client_name: clientName,
+        client_phone: clientPhone || null,
+        severity,
+        description
+      });
+      if (insertError) throw insertError;
+
+      submitStatus.textContent = 'Report submitted. Thank you for keeping the community safe.';
+      submitStatus.className = 'status success';
+      form.reset();
+    } catch (err) {
+      submitStatus.textContent = err.message || 'Something went wrong.';
+      submitStatus.className = 'status error';
+    }
+  });
+</script>
+
+</body>
+</html>
