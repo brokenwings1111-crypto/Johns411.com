@@ -24,6 +24,19 @@
   .card .name { font-weight: 600; font-size: 1.05rem; }
   .card a { color: #c98a96; word-break: break-all; }
   .card .date { color: #8a787c; font-size: 0.8rem; margin-top: 4px; }
+  .photo-slot {
+    margin-top: 12px;
+    color: #8a787c;
+    font-size: 0.85rem;
+  }
+  .photo-slot img {
+    width: 100%;
+    max-width: 280px;
+    border-radius: 8px;
+    border: 1px solid #3a2c30;
+    display: block;
+    margin-top: 6px;
+  }
   .actions { margin-top: 14px; display: flex; gap: 10px; }
   button {
     flex: 1;
@@ -73,12 +86,31 @@
         <div class="name">${p.display_name}</div>
         <a href="${p.listing_url}" target="_blank" rel="noopener">${p.listing_url}</a>
         <div class="date">Applied ${new Date(p.created_at).toLocaleDateString()}</div>
+        <div class="photo-slot" id="photo-${p.id}">Loading photo...</div>
         <div class="actions">
           <button class="approve" onclick="review('${p.id}', 'verified')">Approve</button>
           <button class="reject" onclick="review('${p.id}', 'rejected')">Reject</button>
         </div>
       </div>
     `).join('');
+
+    // Load each verification photo as a signed (temporary, private) URL
+    for (const p of data) {
+      if (!p.verification_photo_path) {
+        document.getElementById(`photo-${p.id}`).textContent = 'No photo submitted';
+        continue;
+      }
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from('verification-photos')
+        .createSignedUrl(p.verification_photo_path, 300); // valid 5 min
+
+      const slot = document.getElementById(`photo-${p.id}`);
+      if (signedError || !signedData) {
+        slot.textContent = 'Could not load photo';
+      } else {
+        slot.innerHTML = `<img src="${signedData.signedUrl}" alt="Verification photo" />`;
+      }
+    }
   }
 
   async function review(id, status) {
