@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apply for Access — John's 411</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1416;
+    color: #f4ece6;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: #241c1f;
+    border: 1px solid #3a2c30;
+    border-radius: 14px;
+    padding: 32px 28px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 6px;
+    color: #e8b4bc;
+  }
+  p.sub {
+    color: #b8a8ad;
+    font-size: 0.9rem;
+    margin: 0 0 24px;
+    line-height: 1.4;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: #d8c8cc;
+    margin: 16px 0 6px;
+  }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #4a383d;
+    background: #1a1416;
+    color: #f4ece6;
+    font-size: 1rem;
+  }
+  input:focus {
+    outline: none;
+    border-color: #c98a96;
+  }
+  button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    background: #c98a96;
+    color: #1a1416;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; }
+  .status {
+    margin-top: 16px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  .status.error { color: #e08a8a; }
+  .status.success { color: #a8d8b0; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Apply for Access</h1>
+  <p class="sub">
+    This is a private safety tool for verified providers to report unsafe clients.
+    To apply, you'll need a link to your verified listing. Applications are reviewed manually —
+    you'll be notified once approved.
+  </p>
+
+  <form id="signup-form">
+    <label for="display-name">Display name (shown to other members)</label>
+    <input type="text" id="display-name" required />
+
+    <label for="email">Email</label>
+    <input type="email" id="email" required />
+
+    <label for="password">Password</label>
+    <input type="password" id="password" minlength="8" required />
+
+    <label for="listing-url">Link to your verified listing</label>
+    <input type="url" id="listing-url" placeholder="https://..." required />
+
+    <button type="submit" id="submit-btn">Submit Application</button>
+  </form>
+
+  <div id="status" class="status"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Replace with your actual Supabase project values
+  const SUPABASE_URL = "https://vjytxxojhdfafuhpjocj.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_mlxt4kHBEfWUtnSpii71jw_h6EiSW6q";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const form = document.getElementById('signup-form');
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('submit-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    statusEl.textContent = '';
+    statusEl.className = 'status';
+
+    const displayName = document.getElementById('display-name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const listingUrl = document.getElementById('listing-url').value.trim();
+
+    try {
+      // 1. Create the auth user
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email, password
+      });
+      if (signUpError) throw signUpError;
+
+      const userId = signUpData.user?.id;
+      if (!userId) throw new Error('Signup succeeded but no user ID returned — check email confirmation settings.');
+
+      // 2. Create the pending profile row
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: userId,
+        display_name: displayName,
+        listing_url: listingUrl,
+        status: 'pending'
+      });
+      if (profileError) throw profileError;
+
+      statusEl.textContent = "Application submitted. We'll review your listing and notify you by email once approved.";
+      statusEl.className = 'status success';
+      form.reset();
+    } catch (err) {
+      statusEl.textContent = err.message || 'Something went wrong. Please try again.';
+      statusEl.className = 'status error';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
