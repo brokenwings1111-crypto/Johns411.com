@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -35,144 +34,41 @@ p.sub{color:#7a7670;font-size:16px;line-height:1.9;max-width:480px;margin-bottom
 .cell-title{font-family:'Playfair Display',serif;font-size:15px;color:#d4b47a;margin-bottom:8px}
 .cell-desc{font-size:13px;color:#7a7670;line-height:1.8;font-weight:300}
 footer{border-top:1px solid #222428;padding:22px 32px;background:#0f1012;text-align:center;font-size:12px;color:#3e3c3a}
-#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center;padding:24px}
-#modal.open{display:flex}
-.mbox{background:#0f1012;border:1px solid #222428;padding:40px;width:100%;max-width:400px;animation:fadeUp 0.3s ease both}
-.mbox h2{font-family:'Playfair Display',serif;font-size:22px;color:#d4858f;margin-bottom:6px}
-.mbox p{font-size:13px;color:#7a7670;margin-bottom:24px;font-weight:300;line-height:1.7}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:11px;letter-spacing:0.13em;text-transform:uppercase;color:#7a7670;margin-bottom:7px}
-.field input{width:100%;background:#161719;border:1px solid #222428;color:#e2ddd8;padding:11px 14px;font-size:14px;font-weight:300;outline:none;font-family:'Jost',sans-serif;transition:border-color 0.2s}
-.field input:focus{border-color:#b5606a}
-.mclose{position:absolute;top:16px;right:20px;background:none;border:none;color:#7a7670;font-size:20px;cursor:pointer}
-.demo-btns{margin-top:20px;padding-top:16px;border-top:1px solid #222428}
-.demo-label{font-size:11px;color:#3e3c3a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px}
-.demo-btn{display:block;width:100%;background:#161719;border:1px solid #222428;color:#7a7670;padding:9px 14px;font-size:12px;cursor:pointer;text-align:left;margin-bottom:6px;font-family:'Jost',sans-serif;transition:background 0.15s}
-.demo-btn:hover{background:#1c1e21}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 26px;font-size:13px;z-index:999;display:none;border-radius:2px;color:#fff;white-space:nowrap}
 </style>
 </head>
 <body>
 
-<div id="toast"></div>
-
 <nav>
-  <div class="logo">
-    <span class="dot"></span>
-    <span class="logo-text">John's 411</span>
-  </div>
-  <div style="display:flex;gap:12px">
-    <button class="btn btn-out" onclick="openModal('join')">Join</button>
-    <button class="btn btn-rose" onclick="openModal('login')">Sign In</button>
-  </div>
+<div class="logo">
+<span class="dot"></span>
+<span class="logo-text">John's 411</span>
+</div>
+<div style="display:flex;gap:12px">
+<button class="btn btn-out" onclick="window.location.href='signup.html'">Join</button>
+<button class="btn btn-rose" onclick="window.location.href='login.html'">Sign In</button>
+</div>
 </nav>
 
 <main>
-  <div class="tag"><span></span>Private · Verified · Independent Escorts Only</div>
-  <h1>John's 411<br><em>The inside word,<br>from us — for us.</em></h1>
-  <p class="sub">A closed, verified community exclusively for independent escorts. Report bad clients, rate encounters, search by city, and message each other privately. No agencies. No outsiders. Ever.</p>
-  <div class="btns">
-    <button class="btn btn-rose" style="padding:14px 38px;font-size:13px" onclick="openModal('join')">Apply for Access</button>
-    <button class="btn btn-out" style="padding:14px 38px;font-size:13px" onclick="openModal('login')">Member Login</button>
-  </div>
-  <div class="grid">
-    <div class="cell"><div class="cell-icon">🔐</div><div class="cell-title">Verified Members Only</div><div class="cell-desc">Your working phone and email confirmed before access. No outsiders, ever.</div></div>
-    <div class="cell"><div class="cell-icon">⭐</div><div class="cell-title">5-Star Client Reviews</div><div class="cell-desc">Rate payment, conduct, and bargaining. Build a trusted knowledge base.</div></div>
-    <div class="cell"><div class="cell-icon">🔍</div><div class="cell-title">Search by City</div><div class="cell-desc">Find reports from your area or any city you plan to travel to.</div></div>
-    <div class="cell"><div class="cell-icon">🤝</div><div class="cell-title">Corroborate Reports</div><div class="cell-desc">Confirm it happened to you too — adds credibility and alerts the community.</div></div>
-    <div class="cell"><div class="cell-icon">💬</div><div class="cell-title">Private Messaging</div><div class="cell-desc">Message verified members securely and discreetly within the platform.</div></div>
-    <div class="cell" style="border-right:none"><div class="cell-icon">🚫</div><div class="cell-title">Community Ban List</div><div class="cell-desc">Flag a number — added to every member's block list instantly.</div></div>
-  </div>
+<div class="tag"><span></span>Private · Verified · Independent Escorts Only</div>
+<h1>John's 411<br><em>The inside word,<br>from us — for us.</em></h1>
+<p class="sub">A closed, verified community exclusively for independent escorts. Report bad clients, rate encounters, search by city, and message each other privately. No agencies. No outsiders. Ever.</p>
+<div class="btns">
+<button class="btn btn-rose" style="padding:14px 38px;font-size:13px" onclick="window.location.href='signup.html'">Apply for Access</button>
+<button class="btn btn-out" style="padding:14px 38px;font-size:13px" onclick="window.location.href='login.html'">Member Login</button>
+</div>
+
+<div class="grid">
+<div class="cell"><div class="cell-icon">🔐</div><div class="cell-title">Verified Members Only</div><div class="cell-desc">Your working phone and email confirmed before access. No outsiders, ever.</div></div>
+<div class="cell"><div class="cell-icon">⭐</div><div class="cell-title">5-Star Client Reviews</div><div class="cell-desc">Rate payment, conduct, and bargaining. Build a trusted knowledge base.</div></div>
+<div class="cell"><div class="cell-icon">🔍</div><div class="cell-title">Search by City</div><div class="cell-desc">Find reports from your area or any city you plan to travel to.</div></div>
+<div class="cell"><div class="cell-icon">🤝</div><div class="cell-title">Corroborate Reports</div><div class="cell-desc">Confirm it happened to you too — adds credibility and alerts the community.</div></div>
+<div class="cell"><div class="cell-icon">💬</div><div class="cell-title">Private Messaging</div><div class="cell-desc">Message verified members securely and discreetly within the platform.</div></div>
+<div class="cell" style="border-right:none"><div class="cell-icon">🚫</div><div class="cell-title">Community Ban List</div><div class="cell-desc">Flag a number — added to every member's block list instantly.</div></div>
+</div>
 </main>
 
 <footer>© 2025 John's 411 — Private community. All rights reserved.</footer>
-
-<!-- Login Modal -->
-
-<div id="modal">
-  <div class="mbox" style="position:relative">
-    <button class="mclose" onclick="closeModal()">✕</button>
-    <div id="modal-content"></div>
-  </div>
-</div>
-
-<script>
-var members = [
-  {id:1,name:"Sophia A.",phone:"770-555-0001",email:"sophia@proton.me",city:"Atlanta, GA"},
-  {id:2,name:"Valentina R.",phone:"786-555-0002",email:"val@proton.me",city:"Miami, FL"},
-  {id:3,name:"Camille N.",phone:"646-555-0003",email:"camille@proton.me",city:"New York, NY"},
-  {id:4,name:"Reyna M.",phone:"713-555-0004",email:"reyna@proton.me",city:"Houston, TX"}
-];
-
-function toast(msg, good) {
-  var t = document.getElementById("toast");
-  t.textContent = (good ? "✓ " : "✕ ") + msg;
-  t.style.background = good ? "#5a9070" : "#b05050";
-  t.style.display = "block";
-  setTimeout(function(){ t.style.display = "none"; }, 3000);
-}
-
-function openModal(type) {
-  var m = document.getElementById("modal");
-  var c = document.getElementById("modal-content");
-  m.className = "open";
-  if (type === "login") {
-    c.innerHTML = '<h2>Member Sign In</h2><p>Verified independent escorts only.</p>'
-      + '<div class="field"><label>Working email</label><input type="email" id="lem" placeholder="you@proton.me"></div>'
-      + '<div class="field"><label>Working phone</label><input type="tel" id="lph" placeholder="555-000-0000"></div>'
-      + '<button class="btn btn-rose" style="width:100%;padding:13px" onclick="doLogin()">Sign In</button>'
-      + '<div class="demo-btns"><div class="demo-label">Demo — quick login</div>'
-      + members.map(function(m){ return '<button class="demo-btn" onclick="loginAs('+m.id+')">→ '+m.name+' · '+m.city+'</button>'; }).join("")
-      + '</div>';
-  } else {
-    c.innerHTML = '<h2>Apply for Access</h2><p>John\'s 411 is exclusively for independent escorts. We verify your working contact details before granting access.</p>'
-      + '<div class="field"><label>Your working name</label><input type="text" id="rname" placeholder="Professional name"></div>'
-      + '<div class="field"><label>Phone in your ads *</label><input type="tel" id="rphone" placeholder="555-000-0000"></div>'
-      + '<div class="field"><label>Email in your ads *</label><input type="email" id="remail" placeholder="you@proton.me"></div>'
-      + '<div class="field"><label>Your city</label><input type="text" id="rcity" placeholder="e.g. Toronto, ON"></div>'
-      + '<button class="btn btn-rose" style="width:100%;padding:13px" onclick="doApply()">Submit Application →</button>';
-  }
-}
-
-function closeModal() {
-  document.getElementById("modal").className = "";
-}
-
-function doLogin() {
-  var em = document.getElementById("lem") ? document.getElementById("lem").value : "";
-  var ph = document.getElementById("lph") ? document.getElementById("lph").value : "";
-  var found = null;
-  for (var i = 0; i < members.length; i++) {
-    if (members[i].email === em || members[i].phone === ph) { found = members[i]; break; }
-  }
-  if (found) { loginAs(found.id); }
-  else { toast("No verified member found. Please apply for access.", false); }
-}
-
-function loginAs(id) {
-  var m = null;
-  for (var i = 0; i < members.length; i++) { if (members[i].id === id) { m = members[i]; break; } }
-  if (m) {
-    closeModal();
-    toast("Welcome back, " + m.name + "!", true);
-    setTimeout(function(){
-      window.location.href = "https://johns411-com.vercel.app/dashboard.html";
-    }, 1500);
-  }
-}
-
-function doApply() {
-  var phone = document.getElementById("rphone") ? document.getElementById("rphone").value : "";
-  var email = document.getElementById("remail") ? document.getElementById("remail").value : "";
-  if (!phone || !email) { toast("Phone and email are required.", false); return; }
-  closeModal();
-  toast("Application received! We'll verify your details shortly.", true);
-}
-
-document.getElementById("modal").addEventListener("click", function(e) {
-  if (e.target === this) closeModal();
-});
-</script>
 
 </body>
 </html>
